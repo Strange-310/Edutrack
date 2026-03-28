@@ -38,4 +38,18 @@ class Course extends Model
         )->withPivot('semester', 'grade')
          ->withTimestamps();
     }
+    
+
+    // 🔥 NEW: Course attendance records
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    // 🔥 NEW: Course CAT records
+    public function cats()
+    {
+        return $this->hasMany(Cat::class);
+    }
+
 }

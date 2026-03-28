@@ -8,19 +8,11 @@ use App\Models\Lecturer;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Services\RiskAssessmentService;
 
 
 class AdminController extends Controller
 {
-    public function dashboard()
-    {
-        $courses = Course::with('lecturer')->get();
-        $lecturers = Lecturer::with('user')->get();
-        $students = Student::all();
-
-        return view('admin.dashboard', compact('courses','lecturers','students'));
-    }
-
     public function assignCourseToLecturer(Request $request)
 {
     $request->validate([
@@ -115,5 +107,21 @@ public function storeStudents(Request $request)
     ]);
 
     return back()->with('success', 'Student registered successfully.');
+}
+
+public function dashboard(RiskAssessmentService $riskService)
+{
+    $courses = Course::with('lecturer')->get();
+    $lecturers = Lecturer::with('user')->get();
+    $students = Student::with('courses')->get();
+
+    foreach ($students as $student) {
+        $risk = $riskService->calculate($student);
+
+        $student->risk_score = $risk['score'];
+        $student->risk_level = $risk['level'];
+    }
+
+    return view('admin.dashboard', compact('courses','lecturers','students'));
 }
 }
