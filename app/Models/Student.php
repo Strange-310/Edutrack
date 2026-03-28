@@ -57,4 +57,9 @@ public function enrollments()
     {
         return $this->hasMany(Intervention::class);
     }
+    public function results()
+{
+    return $this->hasMany(Result::class);
 }
+}
+

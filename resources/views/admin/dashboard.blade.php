@@ -137,7 +137,7 @@
             </button>
         </div>
 
-        {{-- REGISTER FORM (NOW ABOVE TABLE) --}}
+        {{-- REGITER FORM--}}
         <div x-show="showStudentForm" x-transition
             class="bg-white shadow-xl rounded-2xl p-8 mb-8">
 

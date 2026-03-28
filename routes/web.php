@@ -53,6 +53,14 @@ Route::middleware(['auth','role:admin'])->group(function(){
     Route::post('/admin/students', [AdminController::class, 'storeStudents'])
         ->name('admin.students.store');
 });
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::resource('lecturers', App\Http\Controllers\AdminLecturerController::class);
+});
+// routes/web.php
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('courses/{course}', [App\Http\Controllers\AdminCourseController::class, 'show'])
+        ->name('courses.show');
+});
 
 /*
 |------------------------------------------------------------------
