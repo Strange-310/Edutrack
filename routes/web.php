@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LecturerController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminCourseController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -25,7 +26,7 @@ Route::get('/', function () {
         }
     }
 
-    return view('welcome');
+    return redirect()->route('login');
 });
 Route::post('/admin/courses', [AdminController::class,'storeCourse'])
     ->name('admin.courses.store');
@@ -52,6 +53,7 @@ Route::middleware(['auth','role:admin'])->group(function(){
 
     Route::post('/admin/students', [AdminController::class, 'storeStudents'])
         ->name('admin.students.store');
+        
 });
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('lecturers', App\Http\Controllers\AdminLecturerController::class);
@@ -61,6 +63,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('courses/{course}', [App\Http\Controllers\AdminCourseController::class, 'show'])
         ->name('courses.show');
 });
+Route::get('/lecturer/courses', [LecturerController::class, 'courses'])->name('lecturer.courses');
+Route::get('/lecturer/students', [LecturerController::class, 'students'])->name('lecturer.students');
+Route::get('/lecturer/at-risk', [LecturerController::class, 'atRisk'])->name('lecturer.atRisk');
+
+Route::prefix('admin')
+    ->name('admin.')   
+    ->middleware(['auth', 'role:admin'])
+    ->group(function () {
+
+        Route::resource('courses', AdminCourseController::class);
+
+    });
 
 /*
 |------------------------------------------------------------------

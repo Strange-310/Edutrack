@@ -51,5 +51,6 @@ class Course extends Model
     {
         return $this->hasMany(Cat::class);
     }
+    
 
 }

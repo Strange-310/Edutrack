@@ -7,6 +7,9 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/logo.png') }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/logo.png') }}">
+<link rel="shortcut icon" href="{{ asset('logo.ico') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

@@ -2,95 +2,184 @@
 
 @section('content')
 
-<div class="mb-6">
-    <h2 class="text-2xl font-bold text-gray-800">Lecturer Dashboard</h2>
-    <p class="text-gray-600">Manage courses and monitor student performance.</p>
-</div>
+@php
+    function riskColors($level) {
+        return match($level) {
+            'High Risk' => 'text-red-600 bg-red-100',
+            'Medium Risk' => 'text-orange-500 bg-orange-100',
+            default => 'text-green-600 bg-green-100',
+        };
+    }
+@endphp
 
-<!-- Summary Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div 
+    x-data="{ section: 'courses' }"
+    class="max-w-7xl mx-auto px-6 py-8"
+>
 
-    <div class="bg-white shadow rounded p-5">
-        <h3 class="text-gray-500 text-sm">Total Courses</h3>
-        <p class="text-2xl font-bold text-blue-600">
-            {{ $courses ? $courses->count() : 0 }}
-        </p>
+    {{-- HEADER --}}
+    <div class="mb-10">
+        <h2 class="text-3xl font-bold text-gray-800">Lecturer Dashboard</h2>
+        <p class="text-gray-500 mt-1">Monitor courses, students and risk levels</p>
+
+        {{-- DASHBOARD CARDS --}}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+
+            {{-- COURSES CARD --}}
+            <div 
+                @click="section='courses'"
+                class="bg-white border-l-4 border-blue-500 p-6 rounded shadow cursor-pointer hover:shadow-md transition"
+                :class="{ 'ring-2 ring-blue-500 bg-blue-50': section === 'courses' }"
+            >
+                <h4 class="text-sm uppercase text-gray-500">Total Courses</h4>
+                <p class="text-3xl font-bold text-blue-600 mt-2">{{ $totalCourses }}</p>
+            </div>
+
+            {{-- STUDENTS CARD --}}
+            <div 
+                @click="section='students'"
+                class="bg-white border-l-4 border-green-500 p-6 rounded shadow cursor-pointer hover:shadow-md transition"
+                :class="{ 'ring-2 ring-green-500 bg-green-50': section === 'students' }"
+            >
+                <h4 class="text-sm uppercase text-gray-500">Total Students</h4>
+                <p class="text-3xl font-bold text-green-600 mt-2">{{ $totalStudents }}</p>
+            </div>
+
+            {{-- AT RISK CARD --}}
+            <div 
+                @click="section='risk'"
+                class="bg-white border-l-4 border-red-500 p-6 rounded shadow cursor-pointer hover:shadow-md transition"
+                :class="{ 'ring-2 ring-red-500 bg-red-50': section === 'risk' }"
+            >
+                <h4 class="text-sm uppercase text-gray-500">At Risk Students</h4>
+                <p class="text-3xl font-bold text-red-600 mt-2">{{ $atRiskStudents->count() }}</p>
+            </div>
+
+        </div>
     </div>
 
-    <div class="bg-white shadow rounded p-5">
-        <h3 class="text-gray-500 text-sm">Total Students</h3>
-        <p class="text-2xl font-bold text-green-600">
-            {{ $courses->sum(function($course){
-                return $course->enrollments->count();
-            }) }}
-        </p>
+    {{-- COURSES SECTION --}}
+    <div x-show="section === 'courses'" x-transition>
+
+        <h3 class="text-xl font-semibold mb-6">My Courses</h3>
+
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-100 text-sm uppercase text-gray-700">
+                    <tr>
+                        <th class="p-4 text-left">Course Name</th>
+                        <th class="p-4 text-left">Course Code</th>
+                        <th class="p-4 text-left">Enrolled Students</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($courses as $course)
+                        <tr class="border-t hover:bg-blue-50 transition">
+                            <td class="p-4">{{ $course->name }}</td>
+                            <td class="p-4">{{ $course->code }}</td>
+                            <td class="p-4">{{ $course->students->count() }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="p-4 text-center text-gray-500">
+                                No courses assigned.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
-    <div class="bg-white shadow rounded p-5">
-        <h3 class="text-gray-500 text-sm">At Risk Students</h3>
-        <p class="text-2xl font-bold text-red-600">
-            0
-        </p>
+    {{-- STUDENTS SECTION --}}
+    <div x-show="section === 'students'" x-transition>
+
+        <h3 class="text-xl font-semibold mb-6">All Students</h3>
+
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-100 text-sm uppercase text-gray-700">
+                    <tr>
+                        <th class="p-4 text-left">Student Name</th>
+                        <th class="p-4 text-left">Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($studentCollection as $student)
+                        <tr class="border-t hover:bg-gray-50 transition">
+
+                            <td class="p-4">
+                                {{ $student->user->name }}
+                            </td>
+
+                            <td class="p-4">
+                                <span class="px-3 py-1 rounded-full text-sm font-semibold {{ riskColors($student->risk_level) }}">
+                                    {{ $student->risk_level }}
+                                </span>
+                            </td>
+
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="2" class="p-4 text-center text-gray-500">
+                                No students found.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
-</div>
-<h2>My Courses</h2>
+    {{-- AT RISK SECTION --}}
+    <div x-show="section === 'risk'" x-transition>
 
-@foreach($courses as $course)
-    <div class="border p-4 mb-4">
-        <h3>{{ $course->name }} ({{ $course->code }})</h3>
+        <h3 class="text-xl font-semibold mb-6 text-red-600">At Risk Students</h3>
 
-        <h4>Students</h4>
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-100 text-sm uppercase text-gray-700">
+                    <tr>
+                        <th class="p-4 text-left">Student Name</th>
+                        <th class="p-4 text-left">Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($atRiskStudents as $student)
+                        <tr class="border-t hover:bg-red-50 transition">
 
-        @foreach($course->students as $student)
-            <form method="POST" action="{{ route('lecturer.grade') }}">
-                @csrf
+                            <td class="p-4">
+                                {{ $student->user->name }}
 
-                <input type="hidden" name="student_id" value="{{ $student->id }}">
-                <input type="hidden" name="course_id" value="{{ $course->id }}">
+                                <div class="text-xs text-gray-500 mt-1">
+                                    ⚠ Missed {{ $student->missed_percentage }}% |
+                                    Attendance: {{ $student->attendance_rate }}% |
+                                    CAT: {{ $student->cat_score ?? 'N/A' }}
+                                </div>
+                            </td>
 
-                <p>{{ $student->user->name }}</p>
+                            <td class="p-4">
+                                <span class="px-3 py-1 rounded-full text-sm font-semibold {{ riskColors($student->risk_level) }}">
+                                    {{ $student->risk_level }}
+                                </span>
+                            </td>
 
-                <input type="text"
-                       name="grade"
-                       value="{{ $student->pivot->grade }}"
-                       placeholder="Enter Grade">
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="2" class="p-4 text-center text-gray-500">
+                                No at-risk students.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
-                <button type="submit">Save</button>
-            </form>
-            <hr>
-        @endforeach
     </div>
-@endforeach
 
-<!-- Courses Table -->
-<div class="bg-white shadow rounded p-6">
-    <h3 class="text-lg font-semibold mb-4">Your Courses</h3>
-
-    <table class="w-full border-collapse">
-        <thead>
-            <tr class="bg-gray-200 text-left">
-                <th class="p-3">Course Name</th>
-                <th class="p-3">Course Code</th>
-                <th class="p-3">Enrolled Students</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($courses as $course)
-            <tr class="border-t hover:bg-gray-50">
-                <td class="p-3">{{ $course->name }}</td>
-                <td class="p-3">{{ $course->code }}</td>
-                <td class="p-3">{{ $course->enrollments->count() }}</td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="3" class="p-3 text-center text-gray-500">
-                    No courses assigned yet.
-                </td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
 </div>
 
 @endsection

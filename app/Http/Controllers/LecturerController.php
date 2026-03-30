@@ -3,39 +3,144 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\RiskAssessmentService;
 
 class LecturerController extends Controller
 {
-    public function dashboard()
+    public function dashboard(RiskAssessmentService $riskService)
     {
-        $user = auth()->user();
+        $lecturer = auth()->user()->lecturer;
 
-        if (!$user->lecturer) {
-            abort(403, 'Lecturer profile not found.');
+        $courses = $lecturer->courses()
+            ->with([
+                'students.user',
+                'students.courses',
+                'students.attendances',
+                'students.cats'
+            ])
+            ->get();
+
+        $totalCourses = $courses->count();
+
+        $students = collect();
+
+        foreach ($courses as $course) {
+            foreach ($course->students as $student) {
+                $students->push($student);
+            }
         }
 
-        $lecturer = $user->lecturer;
+        $students = $students->unique('id')->values();
 
-        // Eager load enrollments to avoid N+1 problems
-        $courses = $lecturer->courses()->with('enrollments')->get();
+        $studentCollection = collect();
+        $atRiskStudents = collect();
 
-        return view('lecturer.dashboard', compact('courses'));
-    }
-    public function saveGrade(Request $request)
-{
-    $request->validate([
-        'student_id' => 'required',
-        'course_id' => 'required',
-        'grade' => 'nullable|string'
-    ]);
+        foreach ($students as $student) {
 
-    \DB::table('enrollments')
-        ->where('student_id', $request->student_id)
-        ->where('course_id', $request->course_id)
-        ->update([
-            'grade' => $request->grade
+            $risk = $riskService->calculate($student);
+
+            $student->risk_level = $risk['level'] ?? 'Low Risk';
+            $student->missed_percentage = $risk['missed_percentage'] ?? 0;
+            $student->attendance_rate = $risk['avg_attendance'] ?? 0;
+            $student->cat_score = $risk['avg_cat_score'] ?? 0;
+
+            $studentCollection->push($student);
+
+            if (in_array($student->risk_level, ['Medium Risk', 'High Risk'])) {
+                $atRiskStudents->push($student);
+            }
+        }
+
+        return view('lecturer.dashboard', [
+            'courses' => $courses,
+            'studentCollection' => $studentCollection,
+            'atRiskStudents' => $atRiskStudents,
+            'totalCourses' => $totalCourses,
+            'totalStudents' => $studentCollection->count(),
+            'atRiskCount' => $atRiskStudents->count(),
         ]);
+    }
 
-    return back()->with('success', 'Grade updated successfully.');
-}
+    public function students(RiskAssessmentService $riskService)
+    {
+        $lecturer = auth()->user()->lecturer;
+
+        $courses = $lecturer->courses()
+            ->with([
+                'students.user',
+                'students.attendances',
+                'students.cats'
+            ])
+            ->get();
+
+        $students = collect();
+
+        foreach ($courses as $course) {
+            foreach ($course->students as $student) {
+                $students->push($student);
+            }
+        }
+
+        $students = $students->unique('id')->values();
+
+        foreach ($students as $student) {
+
+            $risk = $riskService->calculate($student);
+
+            $student->risk_level = $risk['level'] ?? 'Low Risk';
+            $student->missed_percentage = $risk['missed_percentage'] ?? 0;
+        }
+
+        return view('lecturer.students', compact('students'));
+    }
+
+    public function courses()
+    {
+        $lecturer = auth()->user()->lecturer;
+
+        $courses = $lecturer->courses()
+            ->withCount('students')
+            ->get();
+
+        return view('lecturer.courses', compact('courses'));
+    }
+
+    public function atRisk(RiskAssessmentService $riskService)
+    {
+        $lecturer = auth()->user()->lecturer;
+
+        $courses = $lecturer->courses()
+            ->with([
+                'students.user',
+                'students.attendances',
+                'students.cats'
+            ])
+            ->get();
+
+        $students = collect();
+
+        foreach ($courses as $course) {
+            foreach ($course->students as $student) {
+                $students->push($student);
+            }
+        }
+
+        $students = $students->unique('id')->values();
+
+        $atRiskStudents = collect();
+
+        foreach ($students as $student) {
+
+            $risk = $riskService->calculate($student);
+
+            $student->risk_level = $risk['level'] ?? 'Low Risk';
+            $student->missed_percentage = $risk['missed_percentage'] ?? 0;
+
+            if (in_array($student->risk_level, ['Medium Risk', 'High Risk'])) {
+                $atRiskStudents->push($student);
+            }
+        }
+
+        return view('lecturer.at-risk', compact('atRiskStudents'));
+    }
 }

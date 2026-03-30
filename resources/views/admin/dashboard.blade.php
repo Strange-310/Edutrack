@@ -4,7 +4,7 @@
 
 <div 
     x-data="{ 
-        section: null,
+        section: 'courses',
         showStudentForm: false,
         showLecturerForm: false
     }"
@@ -19,31 +19,34 @@
         {{-- DASHBOARD CARDS --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
 
-            {{-- COURSES --}}
+            {{-- COURSES CARD --}}
             <div 
                 @click="section='courses'; showStudentForm=false; showLecturerForm=false"
-                class="bg-blue-600 text-white p-6 rounded-xl shadow cursor-pointer hover:scale-105 transition"
+                class="bg-white border-l-4 border-blue-500 p-6 rounded shadow cursor-pointer hover:shadow-md transition"
+                :class="{ 'ring-2 ring-blue-500 bg-blue-50': section === 'courses' }"
             >
-                <h4 class="text-sm uppercase opacity-80">Total Courses</h4>
-                <p class="text-3xl font-bold mt-2">{{ $courses->count() }}</p>
+                <h4 class="text-sm uppercase text-gray-500">Total Courses</h4>
+                <p class="text-3xl font-bold text-blue-600 mt-2">{{ $courses->count() }}</p>
             </div>
 
-            {{-- STUDENTS --}}
+            {{-- STUDENTS CARD --}}
             <div 
                 @click="section='students'; showStudentForm=false; showLecturerForm=false"
-                class="bg-green-600 text-white p-6 rounded-xl shadow cursor-pointer hover:scale-105 transition"
+                class="bg-white border-l-4 border-green-500 p-6 rounded shadow cursor-pointer hover:shadow-md transition"
+                :class="{ 'ring-2 ring-green-500 bg-green-50': section === 'students' }"
             >
-                <h4 class="text-sm uppercase opacity-80">Total Students</h4>
-                <p class="text-3xl font-bold mt-2">{{ $students->count() }}</p>
+                <h4 class="text-sm uppercase text-gray-500">Total Students</h4>
+                <p class="text-3xl font-bold text-green-600 mt-2">{{ $students->count() }}</p>
             </div>
 
-            {{-- LECTURERS --}}
+            {{-- LECTURERS CARD --}}
             <div 
                 @click="section='lecturers'; showStudentForm=false; showLecturerForm=false"
-                class="bg-purple-600 text-white p-6 rounded-xl shadow cursor-pointer hover:scale-105 transition"
+                class="bg-white border-l-4 border-purple-500 p-6 rounded shadow cursor-pointer hover:shadow-md transition"
+                :class="{ 'ring-2 ring-purple-500 bg-purple-50': section === 'lecturers' }"
             >
-                <h4 class="text-sm uppercase opacity-80">Total Lecturers</h4>
-                <p class="text-3xl font-bold mt-2">{{ $lecturers->count() }}</p>
+                <h4 class="text-sm uppercase text-gray-500">Total Lecturers</h4>
+                <p class="text-3xl font-bold text-purple-600 mt-2">{{ $lecturers->count() }}</p>
             </div>
 
         </div>
@@ -51,30 +54,37 @@
 
     {{-- SUCCESS MESSAGE --}}
     @if(session('success'))
-        <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg shadow">
+        <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded shadow-sm">
             {{ session('success') }}
         </div>
     @endif
 
+    {{-- ERROR MESSAGE --}}
+    @if($errors->any())
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
+            <ul class="list-disc pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     {{-- ===================== --}}
     {{-- COURSES SECTION --}}
     {{-- ===================== --}}
     <div x-show="section === 'courses'" x-transition>
 
-        <div class="bg-white shadow-xl rounded-2xl p-8 mb-8">
-            <h3 class="text-lg font-semibold mb-6">Create Course</h3>
+        {{-- CREATE COURSE --}}
+        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Create New Course</h3>
 
             <form method="POST" action="{{ route('admin.courses.store') }}">
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-                    <input type="text" name="name" placeholder="Course Name"
-                        class="input" required>
-
-                    <input type="text" name="code" placeholder="Course Code"
-                        class="input" required>
+                    <input type="text" name="name" placeholder="Course Name" class="input" required>
+                    <input type="text" name="code" placeholder="Course Code" class="input" required>
 
                     <select name="lecturer_id" class="input">
                         <option value="">Assign Later</option>
@@ -85,10 +95,9 @@
                         @endforeach
                     </select>
 
-                    <button type="submit" class="btn-blue">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
                         Create
                     </button>
-
                 </div>
             </form>
         </div>
@@ -101,6 +110,7 @@
                         <th class="p-4 text-left">Course</th>
                         <th class="p-4 text-left">Code</th>
                         <th class="p-4 text-left">Lecturer</th>
+                        <th class="p-4 text-left">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,18 +118,19 @@
                         <tr class="border-t hover:bg-blue-50 transition">
                             <td class="p-4">{{ $course->name }}</td>
                             <td class="p-4">{{ $course->code }}</td>
-                            <td class="p-4">
-                                {{ $course->lecturer?->user?->name ?? 'Not Assigned' }}
+                            <td class="p-4">{{ $course->lecturer?->user?->name ?? 'Not Assigned' }}</td>
+                            <td>
+                                <a href="{{ route('admin.courses.edit', $course->id) }}" 
+                                     class="bg-yellow-500 text-white px-2 py-1 rounded">
+                                     Change Lecturer
+                                </a>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-
     </div>
-
-
 
     {{-- ===================== --}}
     {{-- STUDENTS SECTION --}}
@@ -195,35 +206,34 @@
     {{-- LECTURERS SECTION --}}
     {{-- ===================== --}}
     <div x-show="section === 'lecturers'" x-transition>
-
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-semibold">Lecturers</h3>
-
-            <button 
-                @click="showLecturerForm = !showLecturerForm"
-                class="btn-purple"
-            >
-                Register Lecturer
-            </button>
+            <button @click="showLecturerForm = !showLecturerForm" class="btn-purple">Register Lecturer</button>
         </div>
 
         {{-- REGISTER LECTURER FORM --}}
-        <div x-show="showLecturerForm" x-transition
-            class="bg-white shadow-xl rounded-2xl p-8 mb-8">
-
+        <div x-show="showLecturerForm" x-transition class="bg-white shadow-xl rounded-2xl p-8 mb-8">
             <form method="POST" action="{{ route('admin.lecturers.store') }}">
                 @csrf
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input type="text" name="name" placeholder="Lecturer Name" class="input" required>
                     <input type="email" name="email" placeholder="Lecturer Email" class="input" required>
+                    <input type="text" name="department" placeholder="Department" class="input" required>
 
-                    <button type="submit" class="btn-purple md:col-span-2">
-                        Save Lecturer
-                    </button>
-
+                    <button type="submit" class="btn-purple md:col-span-3">Save Lecturer</button>
                 </div>
+
+                {{-- Display validation errors --}}
+                @if ($errors->any())
+                    <div class="mt-4 p-4 bg-red-100 text-red-800 rounded-lg">
+                        <ul class="list-disc pl-5">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
             </form>
         </div>
 
@@ -234,6 +244,7 @@
                     <tr>
                         <th class="p-4 text-left">Name</th>
                         <th class="p-4 text-left">Email</th>
+                        <th class="p-4 text-left">Department</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -241,12 +252,12 @@
                         <tr class="border-t hover:bg-purple-50 transition">
                             <td class="p-4">{{ $lecturer->user->name }}</td>
                             <td class="p-4">{{ $lecturer->user->email }}</td>
+                            <td class="p-4">{{ $lecturer->department }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-
     </div>
 
 </div>

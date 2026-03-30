@@ -90,12 +90,32 @@ class RiskAssessmentService
         }
         
         return [
-            'level' => $level,
-            'score' => round($avgRiskScore * 33.33), // Convert to percentage
-            'attendance_risk' => $overallAttendanceRisk,
-            'cat_risk' => $overallCatRisk,
-            'courses_analyzed' => count($attendanceRecords),
-        ];
+    'level' => $level,
+    'score' => round($avgRiskScore * 33.33),
+
+    'attendance_risk' => $overallAttendanceRisk,
+    'cat_risk' => $overallCatRisk,
+    'courses_analyzed' => count($attendanceRecords),
+
+    // ✅ ADD THESE (FIX FOR BLADE)
+    'missed_classes' => collect($attendanceRecords)->sum(function ($a) use ($totalClasses) {
+        return $totalClasses - $a->classes_attended;
+    }),
+
+    'avg_attendance' => round(
+        collect($attendanceRecords)->avg('classes_attended') / $totalClasses * 100,
+        1
+    ),
+
+    'avg_cat_score' => collect($attendanceRecords)->avg(function ($attendance) use ($student) {
+        $cat = $student->cats()
+            ->where('course_id', $attendance->course_id)
+            ->latest()
+            ->first();
+
+        return $cat ? $cat->score : 0;
+    }),
+];
     }
     
     private function getWorstRisk(array $risks)
@@ -104,4 +124,29 @@ class RiskAssessmentService
         if (in_array('Medium', $risks)) return 'Medium';
         return 'Low';
     }
+    public function calculateMissedPercentage($student)
+{
+    $totalMissed = 0;
+    $totalClasses = 0;
+
+    foreach ($student->courses as $course) {
+
+        // number of attended classes for this course
+        $attended = $course->attendances()
+            ->where('student_id', $student->id)
+            ->count();
+
+        // IMPORTANT: replace 11 with real course config if available
+        $maxClasses = $course->max_classes ?? 11;
+
+        $missed = max(0, $maxClasses - $attended);
+
+        $totalMissed += $missed;
+        $totalClasses += $maxClasses;
+    }
+
+    return $totalClasses > 0
+        ? round(($totalMissed / $totalClasses) * 100, 1)
+        : 0;
+}
 }
