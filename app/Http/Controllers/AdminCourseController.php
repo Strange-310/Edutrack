@@ -45,4 +45,20 @@ public function index()
 
     return view('admin.courses.index', compact('courses', 'lecturers'));
 }
+public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'code' => 'required|string|max:50|unique:courses,code',
+        'lecturer_id' => 'nullable|exists:lecturers,id'
+    ]);
+
+    \App\Models\Course::create([
+        'name' => $request->name,
+        'code' => $request->code,
+        'lecturer_id' => $request->lecturer_id
+    ]);
+
+    return back()->with('success', 'Course created successfully.');
+}
 }

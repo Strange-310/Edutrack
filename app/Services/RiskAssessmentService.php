@@ -10,7 +10,7 @@ class RiskAssessmentService
     {
         $totalClasses = 11;
         
-        // ✅ Use plural relationship names: attendances
+        
         $attendanceRecords = $student->attendances;
         
         // If no attendance records, return default
@@ -33,7 +33,7 @@ class RiskAssessmentService
             $attended = $attendance->classes_attended;
             $missed = $totalClasses - $attended;
             
-            // ✅ Use plural relationship: cats
+           
             $catRecord = $student->cats()
                 ->where('course_id', $attendance->course_id)
                 ->latest()
@@ -97,7 +97,7 @@ class RiskAssessmentService
     'cat_risk' => $overallCatRisk,
     'courses_analyzed' => count($attendanceRecords),
 
-    // ✅ ADD THESE (FIX FOR BLADE)
+  
     'missed_classes' => collect($attendanceRecords)->sum(function ($a) use ($totalClasses) {
         return $totalClasses - $a->classes_attended;
     }),

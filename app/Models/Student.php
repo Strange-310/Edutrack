@@ -79,4 +79,8 @@ class Student extends Model
         
         return $coursesData;
     }
+    public function risk()
+{
+    return $this->hasOne(StudentRisk::class);
+}
 }

@@ -147,7 +147,7 @@ Route::middleware('auth')->group(function () {
             return redirect('/');
     }
 
-})->middleware('auth')->name('password.update');
+})->middleware('auth')->name('password.change.update');
 });
 
 require __DIR__.'/auth.php';
